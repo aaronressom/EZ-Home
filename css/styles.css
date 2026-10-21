@@ -440,16 +440,6 @@ input:focus, textarea:focus, select:focus {
 }
 .provider__name { margin: 0; font-size: 1.15rem; }
 .provider__overall { font-size: 0.9rem; color: var(--color-muted-foreground); }
-.provider__tag {
-  display: inline-block;
-  margin-top: 2px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  background: var(--color-primary-soft);
-  border-radius: 999px;
-  padding: 1px 10px;
-}
 .provider__section {
   padding: var(--space-4);
   border-bottom: 1px solid var(--color-muted);
@@ -549,11 +539,15 @@ input:focus, textarea:focus, select:focus {
 }
 .ref { font-size: 0.95rem; color: var(--color-muted-foreground); }
 
+/* Phones: who + when side by side, price full width below, all compact so the price shows without scrolling */
 .booking-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-4);
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
 }
+.booking-grid > .card { padding: var(--space-4); }
+.booking-grid .value { font-size: 1.05rem; }
+.booking-grid p { margin-bottom: 0; }
 .booking-item h2 {
   display: flex;
   align-items: center;
@@ -569,7 +563,16 @@ input:focus, textarea:focus, select:focus {
   font-weight: 600;
   margin-bottom: var(--space-1);
 }
-.booking-item .price-lock { font-size: 2.25rem; }
+.booking-item .price-lock { font-size: 2.25rem; line-height: 1.1; }
+.booking-price { grid-column: 1 / -1; background: var(--color-success-soft); border-color: #A7F3D0; }
+.price-note {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  margin: var(--space-2) 0 0;
+  font-size: 0.97rem;
+}
+.price-note svg { flex: none; margin-top: 2px; color: var(--color-success); }
 .booking-grid { margin-bottom: var(--space-4); }
 .booking-grid > .card { margin-bottom: 0; }
 
@@ -702,15 +705,31 @@ input:focus, textarea:focus, select:focus {
   h1 { font-size: 1.9rem; }
   .photos { grid-template-columns: repeat(3, 1fr); }
   .photos figure:first-child { grid-column: auto; }
-  .booking-grid { grid-template-columns: repeat(2, 1fr); }
+  .booking-grid { gap: var(--space-4); }
+  .booking-grid > .card { padding: var(--space-5); }
+  .booking-grid .value { font-size: 1.2rem; }
   .scope-cols { grid-template-columns: 3fr 2fr; }
   .outcomes { grid-template-columns: 1fr 1fr; }
   .summary-list div { grid-template-columns: 200px 1fr; gap: var(--space-4); }
 }
 @media (min-width: 900px) {
+  .booking-grid { grid-template-columns: repeat(3, 1fr); }
+  .booking-price { grid-column: auto; }
   .quick-compare { display: none; }
-  .providers { grid-template-columns: repeat(3, 1fr); }
-  .provider { height: 100%; }
+  /* Each card spans the same 6 rows (head, experience, estimate, availability,
+     reviews, button) via subgrid, so matching sections line up across cards. */
+  .providers {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(6, auto);
+    row-gap: 0;
+    align-items: stretch;
+  }
+  .provider {
+    display: grid;
+    grid-row: span 6;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

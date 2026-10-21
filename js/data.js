@@ -86,6 +86,10 @@ EZ.scope = {
   ]
 };
 
+/*
+ * Keep the providers comparable: same number of reviews each, so no card looks
+ * "heavier". `tag` is an internal label for the test log only; it is not shown.
+ */
 EZ.providers = [
   {
     id: "dana",
@@ -104,7 +108,8 @@ EZ.providers = [
     days: ["2026-10-30", "2026-10-31"],
     reviews: [
       { who: "Jen R.", job: "Mounted 2 floating shelves", when: "Sep 2026", stars: 5, text: "Quick and tidy. Shelves are level and she vacuumed up after." },
-      { who: "Omar T.", job: "Mounted a 55\" TV", when: "Aug 2026", stars: 4, text: "Good work. Arrived near the end of the window but texted ahead." }
+      { who: "Omar T.", job: "Mounted a 55\" TV", when: "Aug 2026", stars: 4, text: "Good work. Arrived near the end of the window but texted ahead." },
+      { who: "Lucas P.", job: "Mounted 3 bathroom shelves", when: "Jul 2026", stars: 5, text: "Asked exactly where I wanted them before drilling. Charged what she quoted." }
     ]
   },
   {
@@ -145,7 +150,8 @@ EZ.providers = [
     days: ["2026-10-28", "2026-10-29", "2026-10-30"],
     reviews: [
       { who: "Chris L.", job: "Mounted 2 wall shelves", when: "Oct 2026", stars: 5, text: "Booked him the day before and he showed up in the first ten minutes of the window." },
-      { who: "Mei S.", job: "Mounted a floating bookshelf", when: "Aug 2026", stars: 4, text: "Solid work. One bracket needed an extra anchor and he asked before adding it." }
+      { who: "Mei S.", job: "Mounted a floating bookshelf", when: "Aug 2026", stars: 4, text: "Solid work. One bracket needed an extra anchor and he asked before adding it." },
+      { who: "Rita G.", job: "Mounted 3 shelves in a nursery", when: "Jun 2026", stars: 5, text: "Explained which anchors he used and why. The shelves feel very solid." }
     ]
   }
 ];

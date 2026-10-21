@@ -416,20 +416,20 @@
       return '<article class="card provider" id="card-' + p.id + '" aria-labelledby="pname-' + p.id + '">' +
         '<div class="provider__head"><div class="avatar" aria-hidden="true">' + p.initials + "</div><div>" +
         '<h2 class="provider__name" id="pname-' + p.id + '" tabindex="-1">' + esc(p.name) + "</h2>" +
-        '<span class="provider__tag">' + esc(p.tag) + "</span></div></div>" +
+        '<div class="review__meta">' + p.years + " years as a handyman</div></div></div>" +
 
+        /* Sections are in the same order in every card so they line up across columns (see .provider in CSS). */
         '<div class="provider__section"><div class="provider__label">' + icon("tool", 16) + "Experience with this job</div>" +
-        '<div class="big-number">' + p.jobsThisType + "</div><div>" + esc(p.jobNoun) + " done through EZ Home</div>" +
-        '<div class="review__meta">' + p.years + " years as a handyman</div></div>" +
+        '<div class="big-number">' + p.jobsThisType + "</div><div>" + esc(p.jobNoun) + " done through EZ Home</div></div>" +
 
-        '<div class="provider__section"><div class="provider__label">' + icon("star", 16) + "Reviews from similar jobs</div>" + reviews +
-        '<p class="review__meta" style="margin-top:12px;margin-bottom:0">Overall: ' + p.rating + " out of 5 from " + p.ratingCount + " jobs of all kinds</p></div>" +
+        '<div class="provider__section provider__price"><div class="provider__label">' + icon("tag", 16) + "Upfront estimate for your job</div>" +
+        '<div class="big-number">' + money(p.estimate) + "</div><div class=\"review__meta\">" + esc(p.estimateNote) + ". Can only change if you approve it.</div></div>" +
 
         '<div class="provider__section"><div class="provider__label">' + icon("calendar", 16) + "Availability</div>" +
         "<div><strong>" + esc(p.availability) + "</strong></div></div>" +
 
-        '<div class="provider__section provider__price"><div class="provider__label">' + icon("tag", 16) + "Upfront estimate for your job</div>" +
-        '<div class="big-number">' + money(p.estimate) + "</div><div class=\"review__meta\">" + esc(p.estimateNote) + ". Can only change if you approve it.</div></div>" +
+        '<div class="provider__section"><div class="provider__label">' + icon("star", 16) + "Reviews from similar jobs</div>" + reviews +
+        '<p class="review__meta" style="margin-top:12px;margin-bottom:0">Overall: ' + p.rating + " out of 5 from " + p.ratingCount + " jobs of all kinds</p></div>" +
 
         '<div class="provider__cta"><button type="button" class="btn btn--primary btn--block" data-pick="' + p.id + '">Choose ' + esc(p.first) + "</button></div>" +
         "</article>";
@@ -551,13 +551,18 @@
     return topBar("booked") +
       '<div class="confirm-hero"><div class="check-circle">' + icon("check", 30) + "</div>" +
       "<h1>You're booked with " + esc(p.name) + "</h1>" +
-      '<p class="ref">Booking ' + EZ.bookingRef + ". " + esc(p.first) + " has reviewed your job description and agreed to this scope and price.</p></div>" +
+      "<p>" + esc(p.first) + " has read your job description and agreed to the scope and price below.</p>" +
+      '<p class="ref">Booking ' + EZ.bookingRef + "</p></div>" +
 
+      /* Who, when, and price sit together at the top: the value moment should show without scrolling. */
       '<div class="booking-grid">' +
       '<section class="card booking-item"><h2>' + icon("user", 16) + "Who is coming</h2>" +
       '<div class="value">' + esc(p.name) + "</div><p>" + p.jobsThisType + " " + esc(p.jobNoun) + " on EZ Home</p></section>" +
       '<section class="card booking-item"><h2>' + icon("clock", 16) + "When</h2>" +
       '<div class="value">' + esc(d.long) + "</div><p>Arrives between <strong>" + esc(state.windowTime) + "</strong></p></section>" +
+      '<section class="card booking-item booking-price"><h2>' + icon("lock", 16) + "Agreed price</h2>" +
+      '<div class="value price-lock">' + money(p.estimate) + "</div>" +
+      '<p class="price-note">' + icon("shield", 20) + "<span><strong>Can only change if you approve it.</strong> If " + esc(p.first) + " finds something unexpected, you'll see the reason and the new price first, and you decide before any extra work starts.</span></p></section>" +
       "</div>" +
 
       '<section class="card booking-item"><h2>' + icon("list", 16) + "What " + esc(p.first) + " will do</h2>" +
@@ -566,10 +571,6 @@
       '</ul></div><div><p><strong>Not included</strong></p><ul class="x-list">' +
       EZ.scope.excludes.map(function (s) { return "<li>" + icon("x") + "<span>" + esc(s) + "</span></li>"; }).join("") +
       '</ul><p style="margin-top:12px"><strong>Done means:</strong> ' + esc(state.job.outcome) + "</p></div></div></section>" +
-
-      '<section class="card booking-item"><h2>' + icon("lock", 16) + "Agreed price</h2>" +
-      '<div class="value price-lock">' + money(p.estimate) + "</div>" +
-      '<div class="notice notice--success" style="margin:12px 0 0">' + icon("shield", 22) + "<div><p><strong>This price can only change if you approve it.</strong> If " + esc(p.first) + " finds something unexpected, you'll see the reason and the new price in the app, and you decide before any extra work starts.</p></div></div></section>" +
 
       '<section class="card booking-item"><h2>' + icon("support", 16) + "If something goes wrong</h2>" +
       "<p>After the job you'll get a completion record with photos. If the work isn't right, report it there. EZ Home support will review this written agreement with you and help sort it out, so you aren't left to argue with the provider alone.</p></section>" +
