@@ -109,9 +109,10 @@ h1:focus { outline: none; }
   gap: var(--space-3);
 }
 /* EZ Home logo (images/ez-home-logo.svg) followed by "by" and the EZ Day logo */
+/* Baseline alignment: the house bottom, the "by" text baseline and the EZ Day logo bottom share one line. */
 .brand {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--space-3);
   min-width: 0;
 }
@@ -119,7 +120,7 @@ h1:focus { outline: none; }
 .brand__home img { display: block; height: 32px; width: auto; }
 .brand__by {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 6px;
   font-size: 0.85rem;
   color: var(--color-muted-foreground);
