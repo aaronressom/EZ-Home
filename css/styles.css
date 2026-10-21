@@ -128,7 +128,7 @@ h1:focus { outline: none; }
   color: var(--color-muted-foreground);
   white-space: nowrap;
 }
-.brand__by img { display: block; height: 12px; width: auto; }
+.brand__by img { display: block; height: 14px; width: auto; }
 .proto-tag {
   font-size: 0.8rem;
   color: var(--color-muted-foreground);
