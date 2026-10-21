@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Spirit level resting on a shelf, bubble centered</title>
+  <rect width="400" height="300" fill="#EDE7DD"/>
+  <!-- shelf, close up -->
+  <rect x="0" y="176" width="400" height="30" fill="#8A6A48"/>
+  <rect x="0" y="206" width="400" height="10" fill="#000" opacity="0.08"/>
+  <!-- level -->
+  <rect x="70" y="128" width="260" height="48" rx="6" fill="#FACC15" stroke="#A16207" stroke-width="2"/>
+  <rect x="170" y="138" width="60" height="28" rx="12" fill="#D9F99D" stroke="#4D7C0F" stroke-width="2"/>
+  <line x1="190" y1="138" x2="190" y2="166" stroke="#3F6212" stroke-width="2"/>
+  <line x1="210" y1="138" x2="210" y2="166" stroke="#3F6212" stroke-width="2"/>
+  <ellipse cx="200" cy="152" rx="8" ry="7" fill="#F7FEE7" stroke="#65A30D"/>
+  <circle cx="100" cy="152" r="6" fill="#A16207"/>
+  <circle cx="300" cy="152" r="6" fill="#A16207"/>
+  <text x="12" y="290" font-family="sans-serif" font-size="12" fill="#3F3A33">Photo 2 of 3 · placeholder image</text>
+</svg>

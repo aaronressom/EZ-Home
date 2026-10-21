@@ -1,0 +1,12 @@
+# Private course material and interview data: never publish
+docs/
+docs-text/
+CONTEXT.md
+PRODUCT.md
+
+# Local tooling / OS noise
+.claude/
+.impeccable/
+.DS_Store
+Thumbs.db
+desktop.ini
