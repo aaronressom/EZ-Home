@@ -60,7 +60,7 @@ h1, h2, h3 {
   margin: 0 0 var(--space-3);
   font-weight: 600;
 }
-h1 { font-size: 1.6rem; }
+h1 { font-size: 1.6rem; text-wrap: balance; }
 h2 { font-size: 1.2rem; }
 h3 { font-size: 1rem; }
 p { margin: 0 0 var(--space-3); }
@@ -124,7 +124,7 @@ h1:focus { outline: none; }
 .site-footer {
   max-width: 960px;
   margin: var(--space-7) auto 0;
-  padding: var(--space-5) var(--space-4) var(--space-6);
+  padding: var(--space-5) var(--space-4) max(var(--space-6), env(safe-area-inset-bottom));
   font-size: 0.9rem;
   color: var(--color-muted-foreground);
   border-top: 1px solid var(--color-border);
@@ -314,7 +314,7 @@ input:focus, textarea:focus, select:focus {
 /* Choice chips (radio buttons styled as tappable options) */
 .choices {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
   gap: var(--space-2);
 }
 .choice { position: relative; }
@@ -388,14 +388,10 @@ input:focus, textarea:focus, select:focus {
 .btn--block { width: 100%; }
 
 /* ---------- Match screen ---------- */
-.category-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-family: var(--font-heading);
-  font-weight: 600;
-  font-size: 1.25rem;
+.match-title svg {
   color: var(--color-success);
+  vertical-align: -0.15em;
+  margin-right: var(--space-2);
 }
 .summary-list { margin: 0; }
 .summary-list div {
@@ -482,6 +478,54 @@ input:focus, textarea:focus, select:focus {
 .stars { color: #B45309; letter-spacing: 1px; }
 .provider__price { background: var(--color-background); }
 .provider__cta { padding: var(--space-4); margin-top: auto; }
+.provider { scroll-margin-top: var(--space-4); }
+.provider__name:focus { outline: none; }
+
+/* Quick comparison table: phones and tablets only (desktop shows cards side by side) */
+.quick-compare {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.quick-compare table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+.quick-compare caption {
+  text-align: left;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: var(--space-2);
+}
+.quick-compare th,
+.quick-compare td {
+  padding: var(--space-2) var(--space-1);
+  border-bottom: 1px solid var(--color-muted);
+  text-align: center;
+  vertical-align: top;
+}
+.quick-compare tbody th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+  font-size: 0.875rem;
+  padding-left: 0;
+}
+.quick-compare thead a {
+  display: inline-block;
+  min-height: 44px;
+  line-height: 44px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+.quick-compare tbody tr:last-child > * { border-bottom: 0; }
+.quick-compare p { margin: var(--space-2) 0 0; }
 
 /* ---------- Arrival windows ---------- */
 .day-tabs { margin-bottom: var(--space-5); }
@@ -626,12 +670,14 @@ input:focus, textarea:focus, select:focus {
 .outcome p { margin: 0; font-size: 0.97rem; }
 
 /* ---------- Completion record ---------- */
+/* Phones: first photo full width, the other two side by side, so the price and actions stay close */
 .photos {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-3);
   margin: 0;
 }
+.photos figure:first-child { grid-column: 1 / -1; }
 .photos figure { margin: 0; }
 .photos img {
   display: block;
@@ -655,12 +701,14 @@ input:focus, textarea:focus, select:focus {
 @media (min-width: 600px) {
   h1 { font-size: 1.9rem; }
   .photos { grid-template-columns: repeat(3, 1fr); }
+  .photos figure:first-child { grid-column: auto; }
   .booking-grid { grid-template-columns: repeat(2, 1fr); }
   .scope-cols { grid-template-columns: 3fr 2fr; }
   .outcomes { grid-template-columns: 1fr 1fr; }
   .summary-list div { grid-template-columns: 200px 1fr; gap: var(--space-4); }
 }
 @media (min-width: 900px) {
+  .quick-compare { display: none; }
   .providers { grid-template-columns: repeat(3, 1fr); }
   .provider { height: 100%; }
 }

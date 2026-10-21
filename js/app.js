@@ -179,15 +179,19 @@
   window.addEventListener("hashchange", render);
 
   /* ---------- Job matching (FR-2) ---------- */
-  function hasWord(text, kw) {
+  /* Returns the matched text as the customer typed it (e.g. "AC"), or null. */
+  function findWord(text, kw) {
     var safe = kw.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&");
-    return new RegExp("(^|[^a-z])" + safe + "([^a-z]|$)", "i").test(text);
+    var m = new RegExp("(^|[^a-z])(" + safe + ")(?=[^a-z]|$)", "i").exec(text);
+    return m ? m[2] : null;
   }
+  function hasWord(text, kw) { return findWord(text, kw) !== null; }
   function matchJob(text) {
     for (var i = 0; i < EZ.outOfScope.length; i++) {
       var o = EZ.outOfScope[i];
       for (var k = 0; k < o.keywords.length; k++) {
-        if (hasWord(text, o.keywords[k])) return { type: "out", area: o.area, word: o.keywords[k] };
+        var found = findWord(text, o.keywords[k]);
+        if (found) return { type: "out", area: o.area, word: found };
       }
     }
     var best = null, bestScore = 0;
@@ -328,9 +332,18 @@
     if (m.type === "out") {
       return '<div class="narrow">' + topBar("match") +
         "<h1>Sorry, EZ Home can't help with this job yet</h1>" +
-        '<div class="notice notice--warning">' + icon("alert", 22) + "<div><p>Your description mentions <strong>“" + esc(m.word) + "”</strong>, which sounds like <strong>" + esc(m.area.toLowerCase()) + "</strong>.</p>" +
-        "<p>That kind of work needs a licensed specialist or a diagnosis, so it isn't part of EZ Home yet. For now, a licensed specialist in your area is the safest choice.</p></div></div>" +
-        '<div class="card card--flat"><h2>Jobs EZ Home can help with today</h2>' + supported + "</div>" +
+        '<div class="notice notice--warning">' + icon("alert", 22) + "<div><p>Your description mentions <strong>“" + esc(m.word) + "”</strong>, so this sounds like <strong>" + esc(m.area.toLowerCase()) + "</strong>.</p>" +
+        "<p>EZ Home only books small handyman jobs right now. Plumbing, electrical, heating and cooling, and appliance repairs need a licensed specialist, so we can't book them yet.</p></div></div>" +
+        '<div class="card card--flat"><h2>Jobs EZ Home can book today</h2>' + supported + "</div>" +
+        "<p>If we got this wrong, or you have one of these jobs, change your description.</p>" +
+        '<div class="actions"><button type="button" class="btn btn--primary" data-go="describe">' + icon("back") + "Change my description</button></div></div>";
+    }
+
+    if (m.type === "none") {
+      return '<div class="narrow">' + topBar("match") +
+        "<h1>Sorry, this job isn't on our list yet</h1>" +
+        "<p class=\"lead\">EZ Home starts with a short list of small handyman jobs, so we can give firm prices before anyone arrives.</p>" +
+        '<div class="card card--flat"><h2>Jobs EZ Home can book today</h2>' + supported + "</div>" +
         '<div class="actions"><button type="button" class="btn btn--primary" data-go="describe">' + icon("back") + "Change my description</button></div></div>";
     }
 
@@ -352,18 +365,16 @@
     var cat = category(state.category);
     if (!cat.bookable) {
       return '<div class="narrow">' + topBar("match") +
-        '<p class="category-badge">' + icon("check", 24) + esc(cat.name) + "</p>" +
-        "<h1>We recognized your job, but this test only has shelf-mounting providers</h1>" +
-        '<div class="notice notice--info">' + icon("info", 22) + "<div><p>EZ Home handles " + esc(cat.name.toLowerCase()) + ", but this prototype only includes providers for the shelf-mounting scenario.</p>" +
-        "<p>Please go back and describe the shelf job: <em>" + esc(EZ.scenario.intro) + "</em></p></div></div>" +
+        "<h1>This test only covers shelf mounting</h1>" +
+        '<div class="notice notice--info">' + icon("info", 22) + "<div><p>We matched your job to <strong>" + esc(cat.name) + "</strong>. EZ Home handles that kind of job, but this prototype only has providers for the shelf scenario.</p>" +
+        "<p>To continue, change your description to the shelf job: <em>" + esc(EZ.scenario.intro) + "</em></p></div></div>" +
         '<div class="actions"><button type="button" class="btn btn--primary" data-go="describe">' + icon("back") + "Change my description</button></div></div>";
     }
 
     var d = day(j.day), t = timeOfDay(j.time);
     return '<div class="narrow">' + topBar("match") +
-      '<p class="category-badge">' + icon("check", 24) + "Shelf &amp; TV Mounting</p>" +
-      "<h1>This is a job EZ Home can help with</h1>" +
-      '<p class="lead">We matched your job to <strong>Shelf &amp; TV Mounting</strong>. We\'ll only show you providers who do this kind of work. Check that we have your details right.</p>' +
+      '<h1 class="match-title">' + icon("check", 28) + "We matched your job to Shelf &amp; TV Mounting</h1>" +
+      '<p class="lead">You\'ll only see providers who do this kind of work. Check that we have your details right. Providers use them to price the job.</p>' +
       '<div class="card"><h2>Your job details</h2><dl class="summary-list">' +
       "<div><dt>The job</dt><dd>" + esc(j.description) + "</dd></div>" +
       "<div><dt>When it's done</dt><dd>" + esc(j.outcome) + "</dd></div>" +
@@ -378,9 +389,13 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var c = form.querySelector('input[name="cat"]:checked');
-      if (!c) { form.querySelector(".field").classList.add("has-error"); return; }
+      if (!c) {
+        form.querySelector(".field").classList.add("has-error");
+        form.querySelector('input[name="cat"]').focus();
+        return;
+      }
       if (c.value === "none") {
-        state.match = { type: "out", area: "Something outside our job list", word: state.job.description.split(/\s+/).slice(0, 4).join(" ") + "…" };
+        state.match = { type: "none" };
         state.category = null;
       } else {
         state.match = { type: "in" };
@@ -398,9 +413,9 @@
         return '<div class="review"><div class="review__meta"><span class="review__job">' + esc(r.job) + "</span> · " + esc(r.when) + "</div>" +
           "<div>" + stars(r.stars) + "</div><p>“" + esc(r.text) + "” <span class=\"review__meta\">— " + esc(r.who) + "</span></p></div>";
       }).join("");
-      return '<article class="card provider" aria-labelledby="pname-' + p.id + '">' +
+      return '<article class="card provider" id="card-' + p.id + '" aria-labelledby="pname-' + p.id + '">' +
         '<div class="provider__head"><div class="avatar" aria-hidden="true">' + p.initials + "</div><div>" +
-        '<h2 class="provider__name" id="pname-' + p.id + '">' + esc(p.name) + "</h2>" +
+        '<h2 class="provider__name" id="pname-' + p.id + '" tabindex="-1">' + esc(p.name) + "</h2>" +
         '<span class="provider__tag">' + esc(p.tag) + "</span></div></div>" +
 
         '<div class="provider__section"><div class="provider__label">' + icon("tool", 16) + "Experience with this job</div>" +
@@ -420,16 +435,39 @@
         "</article>";
     }).join("");
 
+    /* Phone-only side-by-side summary; the full cards stack below it. */
+    var avg = function (p) {
+      var sum = p.reviews.reduce(function (a, r) { return a + r.stars; }, 0);
+      return (sum / p.reviews.length).toFixed(1);
+    };
+    var quick = '<div class="quick-compare"><table><caption>Quick comparison</caption><thead><tr><td></td>' +
+      EZ.providers.map(function (p) { return '<th scope="col"><a href="#card-' + p.id + '" data-jump="' + p.id + '">' + esc(p.first) + "</a></th>"; }).join("") +
+      "</tr></thead><tbody>" +
+      '<tr><th scope="row">Jobs like yours</th>' + EZ.providers.map(function (p) { return "<td>" + p.jobsThisType + "</td>"; }).join("") + "</tr>" +
+      '<tr><th scope="row">Similar-job reviews</th>' + EZ.providers.map(function (p) { return "<td>" + avg(p) + " avg</td>"; }).join("") + "</tr>" +
+      '<tr><th scope="row">Earliest day</th>' + EZ.providers.map(function (p) { return "<td>" + esc(day(p.days[0]).label.replace(/^\w+, /, "")) + "</td>"; }).join("") + "</tr>" +
+      '<tr><th scope="row">Estimate</th>' + EZ.providers.map(function (p) { return "<td><strong>" + money(p.estimate) + "</strong></td>"; }).join("") + "</tr>" +
+      '</tbody></table><p class="review__meta">Tap a name to see full details and reviews.</p></div>';
+
     return topBar("providers") +
       "<h1>Choose a provider for your shelves</h1>" +
-      '<p class="lead">These 3 providers do shelf and TV mounting and are available near ' + esc(state.job.location) + ". Each one has read your job description and given a price for it.</p>" +
+      '<p class="lead">These 3 providers do shelf and TV mounting and are available near ' + esc(state.job.location) + ". Each one has read your job description and given a price for it. Choosing one doesn't book anything yet; you'll pick an arrival time next.</p>" +
       '<div class="card card--flat"><h2>What every estimate covers</h2><div class="scope-cols"><ul class="check-list">' +
       EZ.scope.includes.map(function (s) { return "<li>" + icon("check") + "<span>" + esc(s) + "</span></li>"; }).join("") +
       '</ul><div><ul class="x-list">' + EZ.scope.excludes.map(function (s) { return "<li>" + icon("x") + "<span>Not included: " + esc(s.toLowerCase()) + "</span></li>"; }).join("") +
       '</ul><p class="review__meta" style="margin-top:12px">Time on site: ' + esc(EZ.scope.duration.toLowerCase()) + "</p></div></div></div>" +
-      '<div class="providers">' + cards + "</div>";
+      quick + '<div class="providers">' + cards + "</div>";
   };
   BIND.providers = function () {
+    /* In-page jumps would change the hash and trigger the router, so scroll manually. */
+    app.querySelectorAll("[data-jump]").forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        var card = document.getElementById("card-" + a.getAttribute("data-jump"));
+        card.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        card.querySelector("h2").focus({ preventScroll: true });
+      });
+    });
     app.querySelectorAll("[data-pick]").forEach(function (b) {
       b.addEventListener("click", function () {
         if (state.providerId !== b.getAttribute("data-pick")) { state.windowDay = null; state.windowTime = null; }
@@ -629,10 +667,9 @@
     var diff = total - p.estimate;
     var d = day(state.windowDay);
 
-    var workDone = EZ.scope.includes.slice();
-    workDone[0] = "Mounted 3 floating shelves, evenly spaced, 14 inches apart";
-    if (approved) workDone.splice(3, 0, "Added 2 heavy-duty anchors to center the middle shelf (approved by you)");
-    else workDone.splice(3, 0, "Mounted the middle shelf on the stud, about 3 inches left of center (you declined extra anchors)");
+    var workDone = EZ.scope.done.slice();
+    if (approved) workDone.splice(2, 0, "Added 2 heavy-duty anchors to center the middle shelf (you approved this)");
+    else workDone.splice(2, 0, "Mounted the middle shelf on the stud, about 3 inches left of center (you declined extra anchors)");
 
     var priceRows = '<tr><th scope="row">Original agreed estimate</th><td>' + money(p.estimate) + "</td></tr>" +
       (approved
@@ -728,14 +765,14 @@
 
     var head = reported
       ? "<h1>Report sent to EZ Home support</h1>" +
-        '<p class="ref">Case ' + EZ.caseRef + ". Your job is on hold until this is resolved.</p>" +
+        '<p class="ref">Case ' + EZ.caseRef + ". The job stays open until this is resolved.</p>" +
         '<div class="card"><h2>What happens next</h2><ol class="steps-next">' +
         "<li>A support specialist reviews your job record and your report within 1 business day.</li>" +
         "<li>They contact you and " + esc(p.first) + " to agree on a fix: a free return visit, a lower price, or another fix.</li>" +
         "<li>The job closes only once you're satisfied or support has made a decision.</li></ol></div>"
       : "<h1>Job complete. Thanks!</h1>" +
-        '<p class="ref">Booking ' + EZ.bookingRef + " is closed. You paid " + esc(p.first) + " " + money(finalPrice()) + ".</p>" +
-        '<div class="card"><p>Your completion record is saved. If a shelf comes loose in the next 30 days, you can still contact EZ Home support from this record.</p></div>';
+        '<p class="ref">Booking ' + EZ.bookingRef + " is closed. The final price was " + money(finalPrice()) + ", paid directly to " + esc(p.first) + ".</p>" +
+        '<div class="card"><p>Your written agreement, any changes you approved, and the completion record with photos are saved with this booking.</p></div>';
 
     return '<div class="narrow">' + topBar("done") +
       '<div class="confirm-hero"><div class="check-circle">' + icon("check", 30) + "</div>" + head + "</div>" +

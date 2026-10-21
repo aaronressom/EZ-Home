@@ -76,7 +76,14 @@ EZ.scope = {
     "Patching or painting old holes",
     "Moving furniture heavier than 50 lb"
   ],
-  duration: "About 1.5 to 2 hours"
+  duration: "About 1.5 to 2 hours",
+  /* Shown on the completion record. The change-request line is added by app.js. */
+  done: [
+    "Mounted 3 floating shelves, evenly spaced 14 inches apart",
+    "Found the wall studs and used them wherever possible",
+    "Checked each shelf with a level",
+    "Cleaned up dust and took away the packaging"
+  ]
 };
 
 EZ.providers = [
