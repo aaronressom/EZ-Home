@@ -39,6 +39,7 @@ Each screen has its own URL (`#describe`, `#providers`, `#booked`, ...), so the 
 | Screen text and behavior | `js/app.js` (one render function per screen) |
 | Colors, fonts, spacing | `css/styles.css` (tokens at the top) |
 | "After" photos | `images/after-*.svg` |
+| Logos in the header | `images/ez-home-logo.svg` (EZ Home house badge, letters outlined so no font is needed) and `images/ezday-logo.png` (parent brand) |
 
 ## Test answers
 
