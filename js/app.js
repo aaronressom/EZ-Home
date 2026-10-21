@@ -351,7 +351,7 @@
       return '<div class="narrow">' + topBar("match") +
         "<h1>Which kind of job is this?</h1>" +
         "<p class=\"lead\">We couldn't tell from your description. Pick the closest match, or go back and add more detail.</p>" +
-        '<div class="card card--flat"><p class="review__meta">You wrote:</p><p>“' + esc(j.description) + "”</p></div>" +
+        '<div class="card card--flat"><p class="meta">You wrote:</p><p>“' + esc(j.description) + "”</p></div>" +
         '<form id="pick-cat"><fieldset class="field"><legend>Choose a job type</legend><div class="choices choices--list">' +
         EZ.categories.map(function (c) {
           return '<label class="choice"><input type="radio" name="cat" value="' + c.id + '"><span>' + c.name + "<small>" + c.examples + "</small></span></label>";
@@ -378,7 +378,7 @@
       '<div class="card"><h2>Your job details</h2><dl class="summary-list">' +
       "<div><dt>The job</dt><dd>" + esc(j.description) + "</dd></div>" +
       "<div><dt>When it's done</dt><dd>" + esc(j.outcome) + "</dd></div>" +
-      "<div><dt>Where</dt><dd>" + esc(j.location) + (j.access ? "<br><span class=\"review__meta\">" + esc(j.access) + "</span>" : "") + "</dd></div>" +
+      "<div><dt>Where</dt><dd>" + esc(j.location) + (j.access ? "<br><span class=\"meta\">" + esc(j.access) + "</span>" : "") + "</dd></div>" +
       "<div><dt>Preferred time</dt><dd>" + esc(d ? d.label : "") + ", " + esc(t ? t.label.toLowerCase() : "") + "</dd></div>" +
       '</dl><p><button type="button" class="btn btn--link" data-go="describe">Edit these details</button></p></div>' +
       '<div class="actions"><button type="button" class="btn btn--primary" data-go="providers">See matched providers ' + icon("forward") + "</button></div></div>";
@@ -410,26 +410,26 @@
   RENDER.providers = function () {
     var cards = EZ.providers.map(function (p) {
       var reviews = p.reviews.map(function (r) {
-        return '<div class="review"><div class="review__meta"><span class="review__job">' + esc(r.job) + "</span> · " + esc(r.when) + "</div>" +
-          "<div>" + stars(r.stars) + "</div><p>“" + esc(r.text) + "” <span class=\"review__meta\">— " + esc(r.who) + "</span></p></div>";
+        return '<div class="review"><div class="meta"><span class="review__job">' + esc(r.job) + "</span> · " + esc(r.when) + "</div>" +
+          "<div>" + stars(r.stars) + "</div><p>“" + esc(r.text) + "” <span class=\"meta\">— " + esc(r.who) + "</span></p></div>";
       }).join("");
       return '<article class="card provider" id="card-' + p.id + '" aria-labelledby="pname-' + p.id + '">' +
         '<div class="provider__head"><div class="avatar" aria-hidden="true">' + p.initials + "</div><div>" +
         '<h2 class="provider__name" id="pname-' + p.id + '" tabindex="-1">' + esc(p.name) + "</h2>" +
-        '<div class="review__meta">' + p.years + " years as a handyman</div></div></div>" +
+        '<div class="meta">' + p.years + " years as a handyman</div></div></div>" +
 
         /* Sections are in the same order in every card so they line up across columns (see .provider in CSS). */
-        '<div class="provider__section"><div class="provider__label">' + icon("tool", 16) + "Experience with this job</div>" +
+        '<div class="provider__section"><div class="section-label">' + icon("tool", 16) + "Experience with this job</div>" +
         '<div class="big-number">' + p.jobsThisType + "</div><div>" + esc(p.jobNoun) + " done through EZ Home</div></div>" +
 
-        '<div class="provider__section provider__price"><div class="provider__label">' + icon("tag", 16) + "Upfront estimate for your job</div>" +
-        '<div class="big-number">' + money(p.estimate) + "</div><div class=\"review__meta\">" + esc(p.estimateNote) + ". Can only change if you approve it.</div></div>" +
+        '<div class="provider__section provider__price"><div class="section-label">' + icon("tag", 16) + "Upfront estimate for your job</div>" +
+        '<div class="big-number">' + money(p.estimate) + "</div><div class=\"meta\">" + esc(p.estimateNote) + ". Can only change if you approve it.</div></div>" +
 
-        '<div class="provider__section"><div class="provider__label">' + icon("calendar", 16) + "Availability</div>" +
+        '<div class="provider__section"><div class="section-label">' + icon("calendar", 16) + "Availability</div>" +
         "<div><strong>" + esc(p.availability) + "</strong></div></div>" +
 
-        '<div class="provider__section"><div class="provider__label">' + icon("star", 16) + "Reviews from similar jobs</div>" + reviews +
-        '<p class="review__meta" style="margin-top:12px;margin-bottom:0">Overall: ' + p.rating + " out of 5 from " + p.ratingCount + " jobs of all kinds</p></div>" +
+        '<div class="provider__section"><div class="section-label">' + icon("star", 16) + "Reviews from similar jobs</div>" + reviews +
+        '<p class="meta mt-3 mb-0">Overall: ' + p.rating + " out of 5 from " + p.ratingCount + " jobs of all kinds</p></div>" +
 
         '<div class="provider__cta"><button type="button" class="btn btn--primary btn--block" data-pick="' + p.id + '">Choose ' + esc(p.first) + "</button></div>" +
         "</article>";
@@ -447,7 +447,7 @@
       '<tr><th scope="row">Similar-job reviews</th>' + EZ.providers.map(function (p) { return "<td>" + avg(p) + " avg</td>"; }).join("") + "</tr>" +
       '<tr><th scope="row">Earliest day</th>' + EZ.providers.map(function (p) { return "<td>" + esc(day(p.days[0]).label.replace(/^\w+, /, "")) + "</td>"; }).join("") + "</tr>" +
       '<tr><th scope="row">Estimate</th>' + EZ.providers.map(function (p) { return "<td><strong>" + money(p.estimate) + "</strong></td>"; }).join("") + "</tr>" +
-      '</tbody></table><p class="review__meta">Tap a name to see full details and reviews.</p></div>';
+      '</tbody></table><p class="meta">Tap a name to see full details and reviews.</p></div>';
 
     return topBar("providers") +
       "<h1>Choose a provider for your shelves</h1>" +
@@ -455,7 +455,7 @@
       '<div class="card card--flat"><h2>What every estimate covers</h2><div class="scope-cols"><ul class="check-list">' +
       EZ.scope.includes.map(function (s) { return "<li>" + icon("check") + "<span>" + esc(s) + "</span></li>"; }).join("") +
       '</ul><div><ul class="x-list">' + EZ.scope.excludes.map(function (s) { return "<li>" + icon("x") + "<span>Not included: " + esc(s.toLowerCase()) + "</span></li>"; }).join("") +
-      '</ul><p class="review__meta" style="margin-top:12px">Time on site: ' + esc(EZ.scope.duration.toLowerCase()) + "</p></div></div></div>" +
+      '</ul><p class="meta mt-3">Time on site: ' + esc(EZ.scope.duration.toLowerCase()) + "</p></div></div></div>" +
       quick + '<div class="providers">' + cards + "</div>";
   };
   BIND.providers = function () {
@@ -509,7 +509,7 @@
       '<p class="field-error">Choose an arrival window to continue.</p></fieldset>' +
       '<div class="notice notice--info">' + icon("clock", 22) + "<p>The job takes " + esc(EZ.scope.duration.toLowerCase()) + ". You'll get a message if " + esc(p.first) + " is running late.</p></div>" +
       '<div class="actions"><button type="submit" class="btn btn--primary">Book ' + esc(p.first) + " for " + money(p.estimate) + "</button></div>" +
-      '<p class="review__meta">Nothing is charged now. You pay ' + esc(p.first) + " directly after the job, based on the agreed estimate.</p>" +
+      '<p class="meta">Nothing is charged now. You pay ' + esc(p.first) + " directly after the job, based on the agreed estimate.</p>" +
       "</form></div>";
   };
   BIND.window = function () {
@@ -556,29 +556,29 @@
 
       /* Who, when, and price sit together at the top: the value moment should show without scrolling. */
       '<div class="booking-grid">' +
-      '<section class="card booking-item"><h2>' + icon("user", 16) + "Who is coming</h2>" +
+      '<section class="card booking-item"><h2 class="section-label">' + icon("user", 16) + "Who is coming</h2>" +
       '<div class="value">' + esc(p.name) + "</div><p>" + p.jobsThisType + " " + esc(p.jobNoun) + " on EZ Home</p></section>" +
-      '<section class="card booking-item"><h2>' + icon("clock", 16) + "When</h2>" +
+      '<section class="card booking-item"><h2 class="section-label">' + icon("clock", 16) + "When</h2>" +
       '<div class="value">' + esc(d.long) + "</div><p>Arrives between <strong>" + esc(state.windowTime) + "</strong></p></section>" +
-      '<section class="card booking-item booking-price"><h2>' + icon("lock", 16) + "Agreed price</h2>" +
+      '<section class="card booking-item booking-price"><h2 class="section-label">' + icon("lock", 16) + "Agreed price</h2>" +
       '<div class="value price-lock">' + money(p.estimate) + "</div>" +
       '<p class="price-note">' + icon("shield", 20) + "<span><strong>Can only change if you approve it.</strong> If " + esc(p.first) + " finds something unexpected, you'll see the reason and the new price first, and you decide before any extra work starts.</span></p></section>" +
       "</div>" +
 
-      '<section class="card booking-item"><h2>' + icon("list", 16) + "What " + esc(p.first) + " will do</h2>" +
+      '<section class="card booking-item"><h2 class="section-label">' + icon("list", 16) + "What " + esc(p.first) + " will do</h2>" +
       '<div class="scope-cols"><div><ul class="check-list">' +
       EZ.scope.includes.map(function (s) { return "<li>" + icon("check") + "<span>" + esc(s) + "</span></li>"; }).join("") +
       '</ul></div><div><p><strong>Not included</strong></p><ul class="x-list">' +
       EZ.scope.excludes.map(function (s) { return "<li>" + icon("x") + "<span>" + esc(s) + "</span></li>"; }).join("") +
-      '</ul><p style="margin-top:12px"><strong>Done means:</strong> ' + esc(state.job.outcome) + "</p></div></div></section>" +
+      '</ul><p class="mt-3"><strong>Done means:</strong> ' + esc(state.job.outcome) + "</p></div></div></section>" +
 
-      '<section class="card booking-item"><h2>' + icon("support", 16) + "If something goes wrong</h2>" +
+      '<section class="card booking-item"><h2 class="section-label">' + icon("support", 16) + "If something goes wrong</h2>" +
       "<p>After the job you'll get a completion record with photos. If the work isn't right, report it there. EZ Home support will review this written agreement with you and help sort it out, so you aren't left to argue with the provider alone.</p></section>" +
 
-      '<section class="card"><form id="conf-form"><fieldset><legend><h2 style="margin:0 0 4px">Quick question: how confident do you feel about ' + esc(p.first) + " doing this job well?</h2></legend>" +
-      '<p class="review__meta">Optional. Pick a number from 1 to 5.</p>' +
+      '<section class="card"><form id="conf-form"><fieldset><legend><h2 class="legend-title">Quick question: how confident do you feel about ' + esc(p.first) + " doing this job well?</h2></legend>" +
+      '<p class="meta">Optional. Pick a number from 1 to 5.</p>' +
       '<div class="rating-scale">' + rating + '</div><div class="rating-ends"><span>1 = not at all</span><span>5 = very confident</span></div>' +
-      '<p id="conf-thanks" class="review__meta" role="status" style="margin-top:8px"></p></fieldset></form></section>' +
+      '<p id="conf-thanks" class="meta mt-2" role="status"></p></fieldset></form></section>' +
 
       '<div class="notice notice--info">' + icon("info", 22) + "<p>That's the booking done. Next, the prototype skips ahead to " + esc(d.long) + ", the day of the job.</p></div>" +
       '<div class="actions"><button type="button" class="btn btn--primary" data-go="arrival">Next: the day of the job ' + icon("forward") + "</button></div>";
@@ -644,7 +644,7 @@
       timeBanner(day(state.windowDay).long + ", about 30 minutes into the job", "The work is in progress") +
       "<h1>" + esc(p.first) + " is asking to change the job</h1>" +
       '<p class="lead">' + esc(p.first) + " has paused this part of the work and won't add anything to your bill unless you approve it.</p>" +
-      '<div class="card"><div class="provider__label">' + icon("support", 16) + "Message from " + esc(p.first) + "</div>" +
+      '<div class="card"><div class="section-label">' + icon("support", 16) + "Message from " + esc(p.first) + "</div>" +
       "<p>“" + esc(c.reason) + "”</p>" + table + decisionArea + "</div></div>";
   };
   BIND.change = function () {
@@ -694,7 +694,7 @@
 
       '<section class="card"><h2>Work done</h2><ul class="check-list">' +
       workDone.map(function (s) { return "<li>" + icon("check") + "<span>" + esc(s) + "</span></li>"; }).join("") +
-      '</ul><p class="review__meta" style="margin-top:12px">On site for 1 hour 50 minutes.</p></section>' +
+      '</ul><p class="meta mt-3">On site for 1 hour 50 minutes.</p></section>' +
 
       '<section class="card"><h2>Final price</h2><table class="price-compare"><caption class="visually-hidden">Final price compared with the estimate</caption><tbody>' + priceRows +
       '</tbody><tfoot><tr><th scope="row">Final price to pay ' + esc(p.first) + "</th><td>" + money(total) + "</td></tr></tfoot></table>" + flag + "</section>" +
@@ -730,7 +730,7 @@
       '<div class="field"><label for="photos">Add photos <span class="req">(optional)</span></label>' +
       '<span class="hint">Photos stay on your device in this prototype.</span><input type="file" id="photos" accept="image/*" multiple></div>' +
 
-      '<div class="card card--flat"><h2>Support automatically gets your full job record</h2><p>You don\'t need to explain the background. Support will see:</p><ul class="sent-list">' +
+      '<div class="card card--flat"><h2>Support automatically gets your full job record</h2><p>You don\'t need to explain the background. Support will see:</p><ul class="check-list">' +
       ["The written scope you agreed to on booking", "The original estimate of " + money(p.estimate),
         "The change request and your answer (" + (state.changeDecision === "approved" ? "approved +" + money(EZ.change.amount) : "declined") + ")",
         "All messages and arrival updates", "The completion record and " + p.first + "'s photos"]
@@ -777,10 +777,10 @@
 
     return '<div class="narrow">' + topBar("done") +
       '<div class="confirm-hero"><div class="check-circle">' + icon("check", 30) + "</div>" + head + "</div>" +
-      '<section class="card"><form id="why-form"><fieldset class="field" style="margin-bottom:0"><legend><h2 style="margin:0 0 4px">One last question: what mattered most when you chose ' + esc(p.first) + "?</h2></legend>" +
-      '<p class="review__meta">Optional. Pick one.</p><div class="choices choices--list">' +
+      '<section class="card"><form id="why-form"><fieldset class="field mb-0"><legend><h2 class="legend-title">One last question: what mattered most when you chose ' + esc(p.first) + "?</h2></legend>" +
+      '<p class="meta">Optional. Pick one.</p><div class="choices choices--list">' +
       options.map(function (o) { return '<label class="choice"><input type="radio" name="why" value="' + esc(o) + '"><span>' + esc(o) + "</span></label>"; }).join("") +
-      '</div><p id="why-thanks" class="review__meta" role="status" style="margin-top:8px"></p></fieldset></form></section>' +
+      '</div><p id="why-thanks" class="meta mt-2" role="status"></p></fieldset></form></section>' +
       '<p>That\'s the end of the prototype. Thank you for testing it.</p>' +
       '<div class="actions"><button type="button" class="btn btn--secondary" id="again">Start over</button></div></div>';
   };
