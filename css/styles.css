@@ -162,7 +162,7 @@ main {
   margin: 0 auto;
   padding: var(--space-5) var(--space-4) 0;
 }
-.narrow { max-width: 640px; }
+.narrow { max-width: 640px; margin-inline: auto; }
 
 .screen-top {
   display: flex;
