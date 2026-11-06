@@ -172,5 +172,30 @@ EZ.change = {
   ifDeclined: "The middle shelf is mounted on the stud, about 3 inches left of center. Your price stays at the original estimate."
 };
 
+/*
+ * Change-request rule shown on the booking confirmation and the change screen.
+ * Testers asked what stops a provider from requesting change after change (Hi-Fi round, Nov 2026).
+ * Wording and the 20% threshold approved by the team, Nov 2026.
+ */
+EZ.changeRule = {
+  limitPct: 20,
+  short: "Every change needs your OK, with a reason and a photo.",
+  limit: "If changes would raise your total more than 20% above the estimate, EZ Home support checks with you before work continues."
+};
+
+/*
+ * Photos. Free stock photos from Unsplash (Unsplash License), credited in the README and under each photo.
+ * Each has a 1200px original and a 600px copy for phones.
+ * `minutes` is when the photo was taken, counted from the start of the booked arrival window
+ * (Marcus arrives 10 minutes late, asks for the change about 25 minutes in, leaves after 1 hour 50 minutes).
+ */
+EZ.photos = {
+  change: { src: "images/after-drill", alt: "Hands drilling into a white wall at the spot where the middle shelf will hang.", caption: "Photo from the job: the wall behind the middle shelf", credit: "charlesdeluvio / Unsplash", minutes: 34 },
+  complete: [
+    { src: "images/after-shelves", alt: "Three wooden floating shelves mounted level on a white wall, the bottom one holding a row of books.", caption: "All 3 shelves mounted and loaded", credit: "Darren Richardson / Unsplash", minutes: 121 },
+    { src: "images/after-level", alt: "A spirit level held on a wooden board, its bubble centered.", caption: "Level check on each shelf", credit: "Louis Hansel / Unsplash", minutes: 123 }
+  ]
+};
+
 EZ.bookingRef = "EZH-24817";
 EZ.caseRef = "EZS-5531";

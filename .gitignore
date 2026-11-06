@@ -3,6 +3,8 @@ docs/
 docs-text/
 CONTEXT.md
 PRODUCT.md
+final/
+CLAUDE.md
 
 # Local tooling / OS noise
 .claude/

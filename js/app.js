@@ -9,7 +9,8 @@
 
   var EZ = window.EZ;
   var app = document.getElementById("app");
-  var STORE_KEY = "ezhome-state";
+  /* Separate key from the tested version at /v1/, which shares this origin. */
+  var STORE_KEY = "ezhome-state-v2";
   var LOG_KEY = "ezhome-test-log";
 
   /* Screen order. `step` drives "Step n of 9"; report is a branch of step 8. */
@@ -26,9 +27,28 @@
     done:       { step: 9, title: "All done", back: null }
   };
   var TOTAL_STEPS = 9;
+  var HOME_TITLE = document.title;
 
   /* ---------- State ---------- */
   var state = load();
+
+  /* ?demo=<screen> loads the example job (Marcus, approved change) and jumps straight to that
+     screen. Used for screenshots and for showing one screen in the presentation. */
+  (function demoJump() {
+    var m = /[?&]demo=([a-z]+)/.exec(location.search);
+    if (!m || !SCREENS[m[1]]) return;
+    var ex = EZ.scenario.example;
+    state = blankState();
+    state.job = { description: ex.description, location: ex.location, access: ex.access, day: ex.day, time: ex.time, outcome: ex.outcome };
+    state.match = { type: "in" };
+    state.category = "mounting";
+    if (["window", "booked", "arrival", "change", "complete", "report", "done"].indexOf(m[1]) > -1) state.providerId = "marcus";
+    if (["booked", "arrival", "change", "complete", "report", "done"].indexOf(m[1]) > -1) { state.windowDay = ex.day; state.windowTime = "9:30 – 10:00 AM"; }
+    if (["complete", "report", "done"].indexOf(m[1]) > -1) state.changeDecision = "approved";
+    if (m[1] === "done") state.outcome = "confirmed";
+    save();
+    history.replaceState(null, "", location.pathname + "#" + m[1]);
+  })();
 
   function blankState() {
     return {
@@ -86,9 +106,27 @@
     var p = provider();
     return p.estimate + (state.changeDecision === "approved" ? EZ.change.amount : 0);
   }
+  /* Drawn stars, announced once as "4 out of 5 stars". */
   function stars(n) {
-    var full = Math.round(n);
-    return '<span class="stars" aria-label="' + n + ' out of 5 stars">' + "★★★★★".slice(0, full) + "☆☆☆☆☆".slice(0, 5 - full) + "</span>";
+    var full = Math.round(n), out = "";
+    for (var i = 0; i < 5; i++) {
+      out += '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="' + (i < full ? "star-on" : "star-off") + '">' + ICON_PATHS.star + "</svg>";
+    }
+    return '<span class="stars" role="img" aria-label="' + n + ' out of 5 stars">' + out + "</span>";
+  }
+  /* A job photo with its time and credit; 600px copy on phones, 1200px on wider screens. */
+  function photo(p, extraClass) {
+    return '<figure class="' + (extraClass || "") + '"><img src="' + p.src + '-600.jpg" srcset="' + p.src + "-600.jpg 600w, " + p.src + '.jpg 1200w" sizes="(min-width: 700px) 320px, 100vw" alt="' + esc(p.alt) + '" width="600" height="450" loading="lazy">' +
+      "<figcaption><span>" + esc(p.caption) + '</span><span class="photo-meta">' + esc(timeAfterWindowStart(state.windowTime, p.minutes)) + " · Stock photo: " + esc(p.credit) + "</span></figcaption></figure>";
+  }
+  /* Clock time `minutes` after the start of the booked window, e.g. ("9:30 – 10:00 AM", 34) -> "10:04 AM". */
+  function timeAfterWindowStart(w, minutes) {
+    var m = /(\d{1,2}):(\d{2})\D+\d{1,2}:\d{2}\s*(AM|PM)/.exec(w || "");
+    if (!m) return "";
+    var h = +m[1] % 12 + (m[3] === "PM" ? 12 : 0);
+    var t = h * 60 + +m[2] + minutes;
+    var hh = Math.floor(t / 60) % 24, mm = t % 60;
+    return (hh % 12 || 12) + ":" + (mm < 10 ? "0" : "") + mm + (hh < 12 ? " AM" : " PM");
   }
   /* Push a window 10 minutes later, e.g. "9:30 – 10:00 AM" -> "9:40 – 10:10 AM".
      Windows always start on :00 or :30, so only the minutes change. */
@@ -159,7 +197,10 @@
     if (redirect) { location.replace("#" + redirect); return; }
 
     app.innerHTML = RENDER[name]();
-    document.title = SCREENS[name].title + " · EZ Home";
+    /* The first screen keeps the page's own title (the one search engines and link previews use). */
+    document.title = name === "describe" ? HOME_TITLE : SCREENS[name].title + " · EZ Home";
+    /* Wide screens use the full page width; the rest use the centered 640px column, and the header follows. */
+    document.body.setAttribute("data-layout", name === "providers" || name === "booked" ? "wide" : "narrow");
     window.scrollTo(0, 0);
     var h1 = app.querySelector("h1");
     if (h1) { h1.setAttribute("tabindex", "-1"); h1.focus({ preventScroll: true }); }
@@ -225,7 +266,7 @@
     return '<div class="narrow">' + topBar("describe") +
       "<h1>What do you need done?</h1>" +
       '<p class="lead">Tell us about your job in your own words. We\'ll match you with providers who have done this exact kind of work before, with prices up front.</p>' +
-      '<div class="scenario"><p><strong>Your test scenario:</strong> ' + esc(EZ.scenario.intro) + "</p>" +
+      '<div class="scenario"><p><strong>Try it with an example:</strong> ' + esc(EZ.scenario.intro) + "</p>" +
       '<p><button type="button" class="btn btn--link" id="fill-example">Fill in an example answer for me</button></p></div>' +
       '<div id="errors"></div>' +
       '<form id="describe-form" novalidate>' +
@@ -246,11 +287,19 @@
       '<div class="actions"><button type="submit" class="btn btn--primary">Continue ' + icon("forward") + "</button></div>" +
       "</form></div>";
   };
+  /* Marks every radio in a group as invalid and points it at the group's error text, so screen
+     readers announce the error on whichever option gets focus. on = false clears it again. */
+  function flagGroup(form, name, errorId, on) {
+    form.querySelectorAll('input[name="' + name + '"]').forEach(function (r) {
+      if (on) { r.setAttribute("aria-invalid", "true"); r.setAttribute("aria-describedby", errorId); }
+      else { r.removeAttribute("aria-invalid"); r.removeAttribute("aria-describedby"); }
+    });
+  }
   function field(id, label, hint, control, error, optional) {
     return '<div class="field" id="field-' + id + '"><label for="' + id + '">' + label + " " +
       '<span class="req">' + (optional ? "(optional)" : "(required)") + "</span></label>" +
       '<span class="hint" id="' + id + '-hint">' + hint + "</span>" +
-      control.replace(/(id="[^"]+")/, '$1 aria-describedby="' + id + "-hint " + id + '-error"') +
+      control.replace(/(id="[^"]+")/, '$1 aria-describedby="' + id + "-hint" + (error ? " " + id + "-error" : "") + '"') +
       (error ? '<p class="field-error" id="' + id + '-error">' + error + "</p>" : "") + "</div>";
   }
   BIND.describe = function () {
@@ -293,6 +342,11 @@
             f.classList.add("has-error");
             var input = document.getElementById(pair[0]);
             if (input) input.setAttribute("aria-invalid", "true");
+            /* Radio groups: tie the error to every option so screen readers announce it. */
+            form.querySelectorAll('input[name="' + pair[0] + '"]').forEach(function (r) {
+              r.setAttribute("aria-invalid", "true");
+              r.setAttribute("aria-describedby", pair[0] + "-error");
+            });
           }
         });
       state.job = job;
@@ -319,7 +373,12 @@
       state.match = m.type === "out" ? { type: "out", area: m.area, word: m.word } : m.type === "in" ? { type: "in" } : { type: "unknown" };
       state.category = m.type === "in" ? m.category.id : null;
       save();
-      go("match");
+      /* Brief "checking" state so the match reads as a result, not a page jump. */
+      var btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.setAttribute("aria-busy", "true");
+      btn.innerHTML = '<span class="spinner" aria-hidden="true"></span>Checking your job…';
+      setTimeout(function () { go("match"); }, matchMedia("(prefers-reduced-motion: reduce)").matches ? 150 : 650);
     });
   };
 
@@ -365,9 +424,9 @@
     var cat = category(state.category);
     if (!cat.bookable) {
       return '<div class="narrow">' + topBar("match") +
-        "<h1>This test only covers shelf mounting</h1>" +
-        '<div class="notice notice--info">' + icon("info", 22) + "<div><p>We matched your job to <strong>" + esc(cat.name) + "</strong>. EZ Home handles that kind of job, but this prototype only has providers for the shelf scenario.</p>" +
-        "<p>To continue, change your description to the shelf job: <em>" + esc(EZ.scenario.intro) + "</em></p></div></div>" +
+        "<h1>This demo only covers shelf mounting</h1>" +
+        '<div class="notice notice--info">' + icon("info", 22) + "<div><p>We matched your job to <strong>" + esc(cat.name) + "</strong>. EZ Home handles that kind of job, but this demo only has providers for the shelf example.</p>" +
+        "<p>To continue, describe the shelf job instead: <em>" + esc(EZ.scenario.intro) + "</em></p></div></div>" +
         '<div class="actions"><button type="button" class="btn btn--primary" data-go="describe">' + icon("back") + "Change my description</button></div></div>";
     }
 
@@ -391,6 +450,7 @@
       var c = form.querySelector('input[name="cat"]:checked');
       if (!c) {
         form.querySelector(".field").classList.add("has-error");
+        flagGroup(form, "cat", "cat-error", true);
         form.querySelector('input[name="cat"]').focus();
         return;
       }
@@ -411,7 +471,7 @@
     var cards = EZ.providers.map(function (p) {
       var reviews = p.reviews.map(function (r) {
         return '<div class="review"><div class="meta"><span class="review__job">' + esc(r.job) + "</span> · " + esc(r.when) + "</div>" +
-          "<div>" + stars(r.stars) + "</div><p>“" + esc(r.text) + "” <span class=\"meta\">— " + esc(r.who) + "</span></p></div>";
+          "<div>" + stars(r.stars) + "</div><p>“" + esc(r.text) + "” <span class=\"meta\">· " + esc(r.who) + "</span></p></div>";
       }).join("");
       return '<article class="card provider" id="card-' + p.id + '" aria-labelledby="pname-' + p.id + '">' +
         '<div class="provider__head"><div class="avatar" aria-hidden="true">' + p.initials + "</div><div>" +
@@ -496,7 +556,7 @@
         var checked = state.windowDay === chosenDay && state.windowTime === w;
         return '<label class="choice"><input type="radio" name="wtime" value="' + esc(w) + '"' + (checked ? " checked" : "") + "><span>" + esc(w) + "</span></label>";
       }).join("");
-      return '<div class="windows-group"><h3>' + t.label + (t.id === state.job.time ? " (your preference)" : "") + '</h3><div class="choices">' + opts + "</div></div>";
+      return '<div class="windows-group"><h2>' + t.label + (t.id === state.job.time ? " (your preference)" : "") + '</h2><div class="choices">' + opts + "</div></div>";
     }).join("");
 
     return '<div class="narrow">' + topBar("window") +
@@ -506,7 +566,7 @@
       '<form id="window-form" novalidate>' +
       '<fieldset class="field day-tabs"><legend>Day</legend><div class="choices">' + dayTabs + "</div></fieldset>" +
       '<fieldset class="field" id="field-wtime"><legend>Arrival window</legend>' + groups +
-      '<p class="field-error">Choose an arrival window to continue.</p></fieldset>' +
+      '<p class="field-error" id="wtime-error">Choose an arrival window to continue.</p></fieldset>' +
       '<div class="notice notice--info">' + icon("clock", 22) + "<p>The job takes " + esc(EZ.scope.duration.toLowerCase()) + ". You'll get a message if " + esc(p.first) + " is running late.</p></div>" +
       '<div class="actions"><button type="submit" class="btn btn--primary">Book ' + esc(p.first) + " for " + money(p.estimate) + "</button></div>" +
       '<p class="meta">Nothing is charged now. You pay ' + esc(p.first) + " directly after the job, based on the agreed estimate.</p>" +
@@ -531,6 +591,7 @@
       if (!t) {
         var f = document.getElementById("field-wtime");
         f.classList.add("has-error");
+        flagGroup(form, "wtime", "wtime-error", true);
         f.querySelector("input").focus();
         return;
       }
@@ -562,17 +623,17 @@
       '<div class="value">' + esc(d.long) + "</div><p>Arrives between <strong>" + esc(state.windowTime) + "</strong></p></section>" +
       '<section class="card booking-item booking-price"><h2 class="section-label">' + icon("lock", 16) + "Agreed price</h2>" +
       '<div class="value price-lock">' + money(p.estimate) + "</div>" +
-      '<p class="price-note">' + icon("shield", 20) + "<span><strong>Can only change if you approve it.</strong> If " + esc(p.first) + " finds something unexpected, you'll see the reason and the new price first, and you decide before any extra work starts.</span></p></section>" +
+      '<p class="price-note">' + icon("shield", 20) + "<span><strong>Can only change if you approve it.</strong> " + esc(EZ.changeRule.short) + " " + esc(EZ.changeRule.limit) + "</span></p></section>" +
       "</div>" +
 
-      '<section class="card booking-item"><h2 class="section-label">' + icon("list", 16) + "What " + esc(p.first) + " will do</h2>" +
+      '<section class="card booking-item"><h2>What ' + esc(p.first) + " will do</h2>" +
       '<div class="scope-cols"><div><ul class="check-list">' +
       EZ.scope.includes.map(function (s) { return "<li>" + icon("check") + "<span>" + esc(s) + "</span></li>"; }).join("") +
       '</ul></div><div><p><strong>Not included</strong></p><ul class="x-list">' +
       EZ.scope.excludes.map(function (s) { return "<li>" + icon("x") + "<span>" + esc(s) + "</span></li>"; }).join("") +
       '</ul><p class="mt-3"><strong>Done means:</strong> ' + esc(state.job.outcome) + "</p></div></div></section>" +
 
-      '<section class="card booking-item"><h2 class="section-label">' + icon("support", 16) + "If something goes wrong</h2>" +
+      '<section class="card booking-item"><h2>If something goes wrong</h2>' +
       "<p>After the job you'll get a completion record with photos. If the work isn't right, report it there. EZ Home support will review this written agreement with you and help sort it out, so you aren't left to argue with the provider alone.</p></section>" +
 
       '<section class="card"><form id="conf-form"><fieldset><legend><h2 class="legend-title">Quick question: how confident do you feel about ' + esc(p.first) + " doing this job well?</h2></legend>" +
@@ -580,7 +641,7 @@
       '<div class="rating-scale">' + rating + '</div><div class="rating-ends"><span>1 = not at all</span><span>5 = very confident</span></div>' +
       '<p id="conf-thanks" class="meta mt-2" role="status"></p></fieldset></form></section>' +
 
-      '<div class="notice notice--info">' + icon("info", 22) + "<p>That's the booking done. Next, the prototype skips ahead to " + esc(d.long) + ", the day of the job.</p></div>" +
+      '<div class="notice notice--info">' + icon("info", 22) + "<p>That's the booking done. Next, the demo skips ahead to " + esc(d.long) + ", the day of the job.</p></div>" +
       '<div class="actions"><button type="button" class="btn btn--primary" data-go="arrival">Next: the day of the job ' + icon("forward") + "</button></div>";
   };
   BIND.booked = function () {
@@ -618,22 +679,29 @@
     var p = provider(), c = EZ.change;
     var decided = state.changeDecision;
     var newTotal = p.estimate + c.amount;
+    var limit = Math.round(p.estimate * EZ.changeRule.limitPct / 100);
+    var pctUsed = Math.round(c.amount / p.estimate * 100);
 
     var table = '<table class="price-compare"><caption class="visually-hidden">Original estimate compared with requested change</caption><tbody>' +
       '<tr><th scope="row">Original agreed estimate</th><td>' + money(p.estimate) + "</td></tr>" +
       '<tr class="is-change"><th scope="row">Requested change: ' + esc(c.title.toLowerCase()) + "</th><td>+" + money(c.amount) + "</td></tr>" +
-      "</tbody><tfoot><tr><th scope=\"row\">New total if you approve</th><td>" + money(newTotal) + "</td></tr></tfoot></table>";
+      "</tbody><tfoot><tr><th scope=\"row\">New total if you approve</th><td>" + money(newTotal) + "</td></tr></tfoot></table>" +
+      /* The change rule, with this change measured against it. */
+      '<div class="rule-note">' + icon("shield", 20) + "<div><p><strong>" + esc(EZ.changeRule.short) + "</strong></p>" +
+      "<p>This change adds " + pctUsed + "% to your estimate. Changes can add up to " + money(limit) + " (" + EZ.changeRule.limitPct + "%) before EZ Home support checks with you.</p>" +
+      '<div class="rule-meter" aria-hidden="true"><span style="width:' + Math.min(100, Math.round(c.amount / limit * 100)) + '%"></span></div>' +
+      '<p class="rule-meter__label">' + money(c.amount) + " of the " + money(limit) + " limit used</p></div></div>";
 
     var decisionArea;
     if (!decided) {
       decisionArea = '<h2>What happens next</h2><div class="outcomes">' +
         '<div class="outcome"><h3>If you approve</h3><p>' + esc(c.ifApproved) + "</p></div>" +
         '<div class="outcome"><h3>If you decline</h3><p>' + esc(c.ifDeclined) + "</p></div></div>" +
-        '<div class="actions"><button type="button" class="btn btn--primary" data-decide="approved">Approve +' + money(c.amount) + " (new total " + money(newTotal) + ')</button>' +
+        '<div class="actions"><button type="button" class="btn btn--primary" id="decide-approve" data-decide="approved">Approve +' + money(c.amount) + " (new total " + money(newTotal) + ')</button>' +
         '<button type="button" class="btn btn--secondary" data-decide="declined">Decline, keep ' + money(p.estimate) + "</button></div>";
     } else {
       var approved = decided === "approved";
-      decisionArea = '<div class="notice ' + (approved ? "notice--success" : "notice--info") + '" role="status">' + icon(approved ? "check" : "info", 22) + "<div>" +
+      decisionArea = '<div class="notice ' + (approved ? "notice--success" : "notice--info") + '" role="status" id="decision-result" tabindex="-1">' + icon(approved ? "check" : "info", 22) + "<div>" +
         "<p><strong>You " + (approved ? "approved" : "declined") + " the change.</strong> " + esc(approved ? c.ifApproved : c.ifDeclined) + "</p>" +
         "<p>This decision is saved to your job record next to the original estimate.</p>" +
         '<p><button type="button" class="btn btn--link" id="undo">Change my answer</button></p></div></div>' +
@@ -645,19 +713,23 @@
       "<h1>" + esc(p.first) + " is asking to change the job</h1>" +
       '<p class="lead">' + esc(p.first) + " has paused this part of the work and won't add anything to your bill unless you approve it.</p>" +
       '<div class="card"><div class="section-label">' + icon("support", 16) + "Message from " + esc(p.first) + "</div>" +
-      "<p>“" + esc(c.reason) + "”</p>" + table + decisionArea + "</div></div>";
+      "<p>“" + esc(c.reason) + "”</p>" + photo(EZ.photos.change, "change-photo") + table + decisionArea + "</div></div>";
   };
   BIND.change = function () {
+    /* After a decision, keep the reader on the result instead of jumping back to the heading. */
+    function decide(value) {
+      state.changeDecision = value;
+      save();
+      if (value) logAnswer("change request", value);
+      render();
+      var target = document.getElementById(value ? "decision-result" : "decide-approve");
+      if (target) target.focus();
+    }
     app.querySelectorAll("[data-decide]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        state.changeDecision = b.getAttribute("data-decide");
-        save();
-        logAnswer("change request", state.changeDecision);
-        render();
-      });
+      b.addEventListener("click", function () { decide(b.getAttribute("data-decide")); });
     });
     var undo = document.getElementById("undo");
-    if (undo) undo.addEventListener("click", function () { state.changeDecision = null; save(); render(); });
+    if (undo) undo.addEventListener("click", function () { decide(null); });
   };
 
   /* 8. Completion record (FR-8, FR-9, FR-11) */
@@ -686,11 +758,8 @@
       "<h1>Check the finished job</h1>" +
       '<p class="lead">' + esc(p.first) + " sent this record of the work. Look it over, then confirm the job is complete or report a problem.</p>" +
 
-      '<section class="card"><h2>Photos of the finished work</h2><div class="photos">' +
-      '<figure><img src="images/after-1.svg" alt="Three floating shelves mounted one above another on a light wall, holding books and a plant." width="400" height="300"><figcaption>All three shelves, mounted</figcaption></figure>' +
-      '<figure><img src="images/after-2.svg" alt="Close-up of a spirit level resting on a shelf, bubble centered." width="400" height="300"><figcaption>Level check on each shelf</figcaption></figure>' +
-      '<figure><img src="images/after-3.svg" alt="Clean floor under the shelves with no dust or packaging left." width="400" height="300"><figcaption>Area cleaned up</figcaption></figure>' +
-      "</div></section>" +
+      '<section class="card"><h2>Photos of the finished work</h2><p class="meta">Taken by ' + esc(p.first) + " before leaving. Each photo is saved to your job record.</p>" +
+      '<div class="photos">' + EZ.photos.complete.map(function (ph) { return photo(ph); }).join("") + "</div></section>" +
 
       '<section class="card"><h2>Work done</h2><ul class="check-list">' +
       workDone.map(function (s) { return "<li>" + icon("check") + "<span>" + esc(s) + "</span></li>"; }).join("") +
@@ -700,8 +769,9 @@
       '</tbody><tfoot><tr><th scope="row">Final price to pay ' + esc(p.first) + "</th><td>" + money(total) + "</td></tr></tfoot></table>" + flag + "</section>" +
 
       '<div class="notice notice--info">' + icon("clock", 22) + "<p>You have <strong>48 hours</strong> to confirm or report a problem. If you don't respond, the job is marked complete automatically.</p></div>" +
-      '<div class="actions"><button type="button" class="btn btn--primary" id="confirm-job">' + icon("check") + "Confirm job complete</button>" +
-      '<button type="button" class="btn btn--danger" data-go="report">' + icon("alert") + "Report a problem</button></div></div>";
+      '<div class="actions actions--split"><button type="button" class="btn btn--primary" id="confirm-job">' + icon("check") + "Confirm job complete</button>" +
+      '<div class="report-action"><button type="button" class="btn btn--secondary" data-go="report" aria-describedby="report-help">' + icon("support") + "Report a problem</button>" +
+      '<p class="meta" id="report-help">Sends your job record to EZ Home support. Nothing is cancelled.</p></div></div></div>';
   };
   BIND.complete = function () {
     document.getElementById("confirm-job").addEventListener("click", function () {
@@ -724,11 +794,11 @@
       '<form id="report-form" novalidate>' +
       '<fieldset class="field" id="field-reason"><legend>What went wrong? <span class="req">(required)</span></legend><div class="choices choices--list">' +
       reasons.map(function (r) { return '<label class="choice"><input type="radio" name="reason" value="' + esc(r) + '"><span>' + esc(r) + "</span></label>"; }).join("") +
-      '</div><p class="field-error">Choose what went wrong.</p></fieldset>' +
+      '</div><p class="field-error" id="reason-error">Choose what went wrong.</p></fieldset>' +
       field("details", "Tell us what happened", "For example: which shelf, what you expected, and what you see now.",
         '<textarea id="details" name="details" rows="4"></textarea>', "Tell us what happened so support can help.") +
       '<div class="field"><label for="photos">Add photos <span class="req">(optional)</span></label>' +
-      '<span class="hint">Photos stay on your device in this prototype.</span><input type="file" id="photos" accept="image/*" multiple></div>' +
+      '<span class="hint">Photos stay on your device in this demo.</span><input type="file" id="photos" accept="image/*" multiple></div>' +
 
       '<div class="card card--flat"><h2>Support automatically gets your full job record</h2><p>You don\'t need to explain the background. Support will see:</p><ul class="check-list">' +
       ["The written scope you agreed to on booking", "The original estimate of " + money(p.estimate),
@@ -747,6 +817,8 @@
       var reason = form.querySelector('input[name="reason"]:checked');
       var details = form.details.value.trim();
       var firstBad = null;
+      flagGroup(form, "reason", "reason-error", !reason);
+      if (details) form.details.removeAttribute("aria-invalid"); else form.details.setAttribute("aria-invalid", "true");
       if (!reason) { document.getElementById("field-reason").classList.add("has-error"); firstBad = firstBad || form.querySelector('input[name="reason"]'); }
       if (!details) { document.getElementById("field-details").classList.add("has-error"); firstBad = firstBad || form.details; }
       if (firstBad) { firstBad.focus(); return; }
@@ -768,7 +840,7 @@
       ? "<h1>Report sent to EZ Home support</h1>" +
         '<p class="ref">Case ' + EZ.caseRef + ". The job stays open until this is resolved.</p>" +
         '<div class="card"><h2>What happens next</h2><ol class="steps-next">' +
-        "<li>A support specialist reviews your job record and your report within 1 business day.</li>" +
+        "<li>A support specialist reviews your job record and your report.</li>" +
         "<li>They contact you and " + esc(p.first) + " to agree on a fix: a free return visit, a lower price, or another fix.</li>" +
         "<li>The job closes only once you're satisfied or support has made a decision.</li></ol></div>"
       : "<h1>Job complete. Thanks!</h1>" +
@@ -781,7 +853,7 @@
       '<p class="meta">Optional. Pick one.</p><div class="choices choices--list">' +
       options.map(function (o) { return '<label class="choice"><input type="radio" name="why" value="' + esc(o) + '"><span>' + esc(o) + "</span></label>"; }).join("") +
       '</div><p id="why-thanks" class="meta mt-2" role="status"></p></fieldset></form></section>' +
-      '<p>That\'s the end of the prototype. Thank you for testing it.</p>' +
+      '<p>That\'s the end of the demo. Thanks for trying EZ Home.</p>' +
       '<div class="actions"><button type="button" class="btn btn--secondary" id="again">Start over</button></div></div>';
   };
   BIND.done = function () {

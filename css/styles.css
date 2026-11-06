@@ -16,7 +16,7 @@
   --color-muted: #E9EEF5;
   --color-muted-foreground: #475569;
   --color-border: #CBD5E1;
-  --color-input-border: #94A3B8;
+  --color-input-border: #64748B;
   --color-success: #047857;
   --color-success-soft: #ECFDF5;
   --color-success-border: #A7F3D0;
@@ -37,7 +37,7 @@
   --radius-lg: 14px;
   --radius-pill: 999px;
   --radius-circle: 50%;
-  --shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.05);
 
   --duration-fast: 150ms;
 
@@ -78,7 +78,12 @@ p { margin: 0 0 var(--space-3); }
 ul { margin: 0; padding-left: 1.2em; }
 li + li { margin-top: var(--space-1); }
 
-a { color: var(--color-primary); }
+a { color: var(--color-primary); text-underline-offset: 3px; }
+
+/* Browser-drawn surfaces follow the palette. */
+html { accent-color: var(--color-primary); }
+::selection { background: var(--color-primary-border); color: var(--color-foreground); }
+input, textarea { caret-color: var(--color-primary); }
 
 :focus-visible {
   outline: 3px solid var(--color-ring);
@@ -99,6 +104,9 @@ h1:focus { outline: none; }
   background: var(--color-card);
   border-bottom: 1px solid var(--color-border);
 }
+/* Header content lines up with the page column: 640px on single-column screens, 960px on wide ones. */
+body[data-layout="narrow"] .site-header__inner,
+body[data-layout="narrow"] .site-footer { max-width: 672px; }
 .site-header__inner {
   max-width: 960px;
   margin: 0 auto;
@@ -116,7 +124,8 @@ h1:focus { outline: none; }
   gap: var(--space-1);
   min-width: 0;
 }
-.brand__home { display: block; border-radius: var(--radius); }
+/* 6px of padding gives the logo link a 44px tap area; the negative margin keeps the header height. */
+.brand__home { display: block; border-radius: var(--radius); padding: 6px 0; margin: -6px 0; }
 .brand__home img { display: block; height: 32px; width: auto; }
 .brand__by {
   display: flex;
@@ -152,7 +161,9 @@ h1:focus { outline: none; }
   background: none;
   border: 0;
   padding: 0;
+  min-height: 44px;
   text-decoration: underline;
+  text-underline-offset: 3px;
   cursor: pointer;
 }
 
@@ -246,18 +257,23 @@ h2.section-label {
 .meta { font-size: 0.85rem; color: var(--color-muted-foreground); }
 
 /* Time-jump banner for simulated time passing */
+/* A quiet strip, so the page heading (not the banner) is the first thing read. */
 .time-banner {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  background: var(--color-foreground);
-  color: var(--color-on-dark);
+  background: var(--color-primary-soft);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-primary-border);
   border-radius: var(--radius);
-  padding: var(--space-3) var(--space-4);
-  margin-bottom: var(--space-5);
-  font-size: 0.95rem;
+  padding: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-4);
+  font-size: 0.92rem;
 }
+.time-banner svg { color: var(--color-primary); flex: none; }
 .time-banner strong { font-family: var(--font-heading); font-weight: 500; }
+.time-banner div { color: var(--color-muted-foreground); }
+.time-banner div strong { color: var(--color-foreground); }
 
 .scenario {
   background: var(--color-primary-soft);
@@ -323,6 +339,22 @@ select {
   min-height: 44px;
 }
 textarea { min-height: 96px; resize: vertical; }
+input[type="file"] { font: inherit; font-size: 0.95rem; color: var(--color-muted-foreground); max-width: 100%; }
+input[type="file"]::file-selector-button {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 500;
+  min-height: 44px;
+  margin-right: var(--space-3);
+  padding: 8px 16px;
+  color: var(--color-primary);
+  background: var(--color-card);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease;
+}
+input[type="file"]::file-selector-button:hover { background: var(--color-primary-soft); }
 input:focus, textarea:focus, select:focus {
   outline: 3px solid var(--color-ring-soft);
   border-color: var(--color-primary);
@@ -490,7 +522,10 @@ input:focus, textarea:focus, select:focus {
 .review { font-size: 0.97rem; }
 .review + .review { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px dashed var(--color-border); }
 .review__job { font-weight: 600; }
-.stars { color: var(--color-star); letter-spacing: 1px; }
+.stars { display: inline-flex; gap: 1px; vertical-align: -2px; }
+.stars svg { stroke: var(--color-star); stroke-width: 1.5; stroke-linejoin: round; }
+.stars .star-on { fill: var(--color-star); }
+.stars .star-off { fill: none; }
 .provider__price { background: var(--color-background); }
 .provider__cta { padding: var(--space-4); margin-top: auto; }
 .provider { scroll-margin-top: var(--space-4); }
@@ -545,7 +580,7 @@ input:focus, textarea:focus, select:focus {
 /* ---------- Arrival windows ---------- */
 .day-tabs { margin-bottom: var(--space-5); }
 .windows-group + .windows-group { margin-top: var(--space-4); }
-.windows-group h3 { font-size: 0.95rem; color: var(--color-muted-foreground); margin-bottom: var(--space-2); }
+.windows-group h2 { font-size: 0.95rem; color: var(--color-muted-foreground); margin-bottom: var(--space-2); }
 
 /* ---------- Booking confirmation ---------- */
 .confirm-hero {
@@ -579,7 +614,7 @@ input:focus, textarea:focus, select:focus {
   font-weight: 600;
   margin-bottom: var(--space-1);
 }
-.booking-item .price-lock { font-size: 2.25rem; line-height: 1.1; }
+.booking-item .value.price-lock { font-size: 2.25rem; line-height: 1.1; }
 .booking-price { grid-column: 1 / -1; background: var(--color-success-soft); border-color: var(--color-success-border); }
 .price-note {
   display: flex;
@@ -587,6 +622,7 @@ input:focus, textarea:focus, select:focus {
   align-items: flex-start;
   margin: var(--space-2) 0 0;
   font-size: 0.97rem;
+  max-width: 62ch;
 }
 .price-note svg { flex: none; margin-top: 2px; color: var(--color-success); }
 .booking-grid { margin-bottom: var(--space-4); }
@@ -690,24 +726,74 @@ input:focus, textarea:focus, select:focus {
 
 /* ---------- Completion record ---------- */
 /* Phones: first photo full width, the other two side by side, so the price and actions stay close */
+/* Job photos: one per row on phones, two side by side from 600px. */
 .photos {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
   margin: 0;
 }
-.photos figure:first-child { grid-column: 1 / -1; }
-.photos figure { margin: 0; }
-.photos img {
+.photos figure, .change-photo { margin: 0; }
+.photos img, .change-photo img {
   display: block;
   width: 100%;
   height: auto;
   aspect-ratio: 4 / 3;
+  object-fit: cover;
   border-radius: var(--radius);
-  border: 1px solid var(--color-border);
   background: var(--color-muted);
 }
-.photos figcaption { font-size: 0.9rem; color: var(--color-muted-foreground); margin-top: var(--space-1); }
+.photos figcaption, .change-photo figcaption {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-2);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.photo-meta { font-size: 0.8rem; font-weight: 400; color: var(--color-muted-foreground); }
+.change-photo { max-width: 360px; margin: var(--space-2) 0 var(--space-4); }
+
+/* Change-request rule, with this change measured against the limit. */
+.rule-note {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+  font-size: 0.95rem;
+}
+.rule-note > svg { flex: none; margin-top: 2px; color: var(--color-success); }
+.rule-note p { margin-bottom: var(--space-1); }
+.rule-meter {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-muted);
+  overflow: hidden;
+  margin-top: var(--space-2);
+  max-width: 280px;
+}
+.rule-meter > span { display: block; height: 100%; background: var(--color-success); }
+.rule-meter__label { margin: var(--space-1) 0 0; font-size: 0.85rem; color: var(--color-muted-foreground); font-variant-numeric: tabular-nums; }
+
+/* Confirm and report: report is a calm secondary action with a note on what it does. */
+.actions--split { align-items: flex-start; }
+.report-action { display: flex; flex-direction: column; gap: var(--space-1); }
+.report-action .meta { margin: 0; max-width: 260px; }
+
+/* Button loading state (job check on the first screen). */
+.btn[disabled] { opacity: 0.85; cursor: progress; }
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: var(--color-on-primary);
+  border-radius: var(--radius-circle);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .steps-next { padding-left: 1.4em; }
 .steps-next li + li { margin-top: var(--space-2); }
@@ -715,8 +801,7 @@ input:focus, textarea:focus, select:focus {
 /* ---------- Responsive ---------- */
 @media (min-width: 600px) {
   h1 { font-size: 1.9rem; }
-  .photos { grid-template-columns: repeat(3, 1fr); }
-  .photos figure:first-child { grid-column: auto; }
+  .photos { grid-template-columns: repeat(2, 1fr); }
   .booking-grid { gap: var(--space-4); }
   .booking-grid > .card { padding: var(--space-5); }
   .booking-grid .value { font-size: 1.2rem; }
@@ -725,8 +810,15 @@ input:focus, textarea:focus, select:focus {
   .summary-list div { grid-template-columns: 200px 1fr; gap: var(--space-4); }
 }
 @media (min-width: 900px) {
-  .booking-grid { grid-template-columns: repeat(3, 1fr); }
-  .booking-price { grid-column: auto; }
+  /* Price stays full width under who + when, so the price rule reads as a sentence, not a narrow column. */
+  .booking-price {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  .booking-price h2 { grid-column: 1 / -1; }
+  .booking-price .price-note { margin-top: 0; }
   .quick-compare { display: none; }
   /* Each card spans the same 6 rows (head, experience, estimate, availability,
      reviews, button) via subgrid, so matching sections line up across cards. */
@@ -746,6 +838,7 @@ input:focus, textarea:focus, select:focus {
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
+  .spinner { animation: none; border-top-color: rgba(255, 255, 255, 0.45); }
 }
 
 /* ---------- Spacing helpers (use these instead of style="" in app.js) ----------
